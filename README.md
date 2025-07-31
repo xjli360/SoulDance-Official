@@ -14,7 +14,7 @@
 ## News
 - [2025-08] Source code is currently undergoing an internal open-source compliance review at ByteDance and will be open-sourced once the review is complete.  
 - [2025-07] The **SoulDance Dataset** is now available for **academic use**.  
-- [2025-06] SoulDance** has been **accepted to ICCV 2025**.
+- [2025-06] **SoulDance** has been **accepted to ICCV 2025**.
 
 
 ## Key Features
