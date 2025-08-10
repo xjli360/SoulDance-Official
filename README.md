@@ -92,6 +92,11 @@ If you find this work useful for your research, please cite our paper:
 }
 ```
 
+## License
+This code is distributed under an [MIT LICENSE](https://opensource.org/license/MIT). 
+
+Note that our code depends on other libraries, including SMPL, SMPL-X, PyTorch3D, and uses datasets which each have their own respective licenses that must also be followed.
+
 ## Acknowledgements
 
 We thank the open-source community for their foundational contributions. Our work builds upon [EDGE](https://github.com/Stanford-TML/EDGE), [HumanTOMATO](https://github.com/IDEA-Research/HumanTOMATO), [EMAGE](https://github.com/PantoMatrix/PantoMatrix/blob/main/train_emage_audio.py), and [HumanML3D](https://github.com/EricGuo5513/HumanML3D) for data processing; [MoMask](https://github.com/EricGuo5513/momask-codes), [TMR](https://github.com/Mathux/TMR), and [FineDance](https://github.com/li-ronghui/FineDance) for generative frameworks. Please cite these works if you use this codebase.
