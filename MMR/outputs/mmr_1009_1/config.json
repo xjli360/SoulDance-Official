@@ -1,0 +1,115 @@
+{
+  "data": {
+      "motion_loader": {
+          "_target_": "src.data.motion.MMRMotionLoader",
+          "base_dir": "/mnt/bn/datasets/souldance_data/motion_263",
+          "fps": 30.0,
+          "nfeats": 263
+      },
+      "_target_": "src.data.music_motion.MusicMotionDataset",
+      "path": "datasets/annotations/mmrdance",
+      "text_to_token_emb": {
+          "_target_": "src.data.music.MusicEmbeddings",
+          "path": "datasets/jukebox_feats",
+          "modelname": "jukebox",
+          "preload": true
+      },
+      "preload": true
+  },
+  "model": {
+      "_target_": "src.model.MMR",
+      "motion_encoder": {
+          "_target_": "src.model.ACTORStyleEncoder",
+          "nfeats": "${data.motion_loader.nfeats}",
+          "vae": true,
+          "latent_dim": 256,
+          "ff_size": 1024,
+          "num_layers": 6,
+          "num_heads": 4,
+          "dropout": 0.1,
+          "activation": "gelu"
+      },
+      "text_encoder": {
+          "_target_": "src.model.ACTORStyleEncoder",
+          "nfeats": 4800,
+          "vae": true,
+          "latent_dim": 256,
+          "ff_size": 1024,
+          "num_layers": 6,
+          "num_heads": 4,
+          "dropout": 0.1,
+          "activation": "gelu"
+      },
+      "motion_decoder": {
+          "_target_": "src.model.ACTORStyleDecoder",
+          "nfeats": "${data.motion_loader.nfeats}",
+          "latent_dim": 256,
+          "ff_size": 1024,
+          "num_layers": 6,
+          "num_heads": 4,
+          "dropout": 0.1,
+          "activation": "gelu"
+      },
+      "vae": true,
+      "lmd": {
+          "recons": 1.0,
+          "latent": 1e-05,
+          "kl": 1e-05,
+          "contrastive": 0.1
+      },
+      "lr": 0.0001,
+      "temperature": 0.1,
+      "threshold_selfsim": 0.8,
+      "threshold_selfsim_metrics": 0.95
+  },
+  "trainer": {
+      "_target_": "pytorch_lightning.Trainer",
+      "max_epochs": 500,
+      "log_every_n_steps": 50,
+      "num_sanity_val_steps": 0,
+      "check_val_every_n_epoch": 1,
+      "accelerator": "gpu",
+      "devices": 1,
+      "callbacks": [
+          {
+              "_target_": "pytorch_lightning.callbacks.ModelCheckpoint",
+              "filename": "latest-{epoch}",
+              "every_n_epochs": 1,
+              "save_top_k": 1,
+              "save_last": true
+          },
+          {
+              "_target_": "pytorch_lightning.callbacks.ModelCheckpoint",
+              "filename": "latest-{epoch}",
+              "monitor": "step",
+              "mode": "max",
+              "every_n_epochs": 100,
+              "save_top_k": -1,
+              "save_last": false
+          },
+          {
+              "_target_": "src.callback.progress.ProgressLogger",
+              "precision": 3
+          },
+          {
+              "_target_": "src.callback.tqdmbar.TQDMProgressBar"
+          }
+      ],
+      "logger": {
+          "_target_": "src.logger.csv.CSVLogger",
+          "save_dir": "${run_dir}",
+          "name": "logs"
+      }
+  },
+  "run_dir": "outputs/${hydra:runtime.choices.model}_${hydra:runtime.choices.data}_${hydra:runtime.choices.data/motion_loader}",
+  "seed": 1234,
+  "logger_level": "INFO",
+  "ckpt": "last",
+  "device": "cuda:0",
+  "resume_dir": null,
+  "dataloader": {
+      "_target_": "torch.utils.data.DataLoader",
+      "batch_size": 128,
+      "num_workers": 8
+  }
+}
