@@ -12,6 +12,7 @@
 > To address these challenges, we introduce **SoulDance**, a high-precision music-dance paired dataset captured via professional motion capture systems, featuring meticulously annotated holistic dance movements. Building on this dataset, we propose **SoulNet**, a framework designed to generate music-aligned, kinematically coordinated holistic dance sequences.
 
 ## News
+- [2025-09] We are currently dealing with legal issues to open-source the dataset. A demo and the dataset would be released once legal problems are solved, please stay tuned.
 - [2025-08] The code has been open-sourced.
 - [2025-08] Source code is currently undergoing an internal open-source compliance review at ByteDance and will be open-sourced once the review is complete.  
 - [2025-07] The **SoulDance Dataset** is now available for **academic use**.  
