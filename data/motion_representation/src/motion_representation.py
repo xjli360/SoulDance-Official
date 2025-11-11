@@ -447,7 +447,7 @@ if __name__ == "__main__":
     - Original joint vectors are saved in the 'new_joint_vecs' directory.
     """
 
-    example_id = "000021"
+    example_id = "000000"
     # Lower legs
     l_idx1, l_idx2 = 5, 8
     # Right/Left foot
@@ -463,7 +463,7 @@ if __name__ == "__main__":
     r_hip, l_hip = 2, 1
     joints_num = 52
     # ds_num = 8
-    file_dir_path = '/workspace/SoulNet/dataset/souldance/'
+    file_dir_path = './dataset/'
     # change your motion_data joint
     data_dir = os.path.join(file_dir_path, 'joint')
     # change your save folder
@@ -479,7 +479,7 @@ if __name__ == "__main__":
 
     # Get offsets of target skeleton
     # we random choose one
-    example_data = np.load('/workspace/SoulNet/dataset/souldance/joint/724830_737558_slice178.npy')
+    example_data = np.load('./dataset/000000.npy')
     example_data = example_data[:, body_joints_id + hand_joints_id, :]
     example_data = example_data.reshape(len(example_data), -1, 3)
     example_data = torch.from_numpy(example_data)

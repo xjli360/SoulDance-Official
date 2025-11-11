@@ -62,44 +62,43 @@ pip install -r requirements.txt
 3. Upon approval, you will receive the download link
 
 **Dataset Setup**:
-- Download the SoulDance dataset and place it in the `SoulDance_data/` folder
+- Download the SoulDance dataset and place it in the `data/souldance` folder
 - Organize files as:
-  - Motion data: `data/souldance/motion/slice*.npz`
-  - Music data: `data/souldance/music/slice*.mp4`
+  - Motion data: `data/souldance/motion/*.npy`
+  - Music data: `data/souldance/music/*.wav`
 
 
 ### Data Preparation
 
 Our original sequences are long-form (2-8 minutes) at 30 FPS. Following [EDGE](https://github.com/Stanford-TML/EDGE) preprocessing, we segment data into 5-second motion+music clips.
-
+The motion data we provide are already preprocessed feature representations, so you can skip the **Motion Feature Extraction** part.
 #### Motion Feature Extraction
 
 We use [humantomato representation](https://github.com/IDEA-Research/HumanTOMATO) for body and hand pose representation.
 
-```bash
-cd data/motion_representation/src
-```
+<details>
 
 **Step 1: Extract joint positions**
 ```bash
-python raw_pose_processing.py
-```
+python data/motion_representation/src/raw_pose_processing.py
+````
 
 **Step 2: Generate motion representation**
 ```bash
-python motion_representation.py
+python data/motion_representation/src/motion_representation.py
 ```
+</details>
 
-**Step 3: Visualization (Optional)**
+We use the method from [EMAGE](https://pantomatrix.github.io/EMAGE/) to extract facial features. The facial features have a dimensionality of 100, which includes the expression parameters from [FLAME](https://flame.is.tue.mpg.de/).
 
 For joint visualization (input: `b × frame × 52 × 3`):
 ```bash
-python plot_3d_global.py
+python data/motion_representation/src/plot_3d_global.py
 ```
 
 For 623-dim feature visualization (input: `b × frame × 623`):
 ```bash
-python plot_feature.py
+python data/motion_representation/src/plot_feature.py
 ```
 
 #### Motion Representation Format
@@ -113,7 +112,46 @@ python plot_feature.py
 - `local_velocity`: (B, seq_len, 156) - joint_num × 3 = 52 × 3
 - `foot_contact`: (B, seq_len, 4)
 
-**723-dimensional format**: 623-dim + 100-dim facial features using [FLAME](https://flame.is.tue.mpg.de/) representation (following [EMAGE](https://pantomatrix.github.io/EMAGE/) methodology).
+**723-dimensional format**: 
+To facilitate HRVQ Model Training, we first split the 623-dimensional features into separate body and hand features. Then, we concatenate them with the 100-dimensional facial features, resulting in a 723-dimensional representation consisting of body + hand + face:
+- `body_feat`: [:,:,:263]
+- `hand_feat`: [:,:,263:623]
+- `face_feat`: [:,:,623:]
+
+The motion features in our provided dataset are represented as 723-dimensional feature vectors, and the music is provided as desensitized WAV format files.
+
+You can use the following script to convert a 723-dimension feature to a 623-dimension, and similarly, you can convert a 623-dimension feature back to a 723-dimension:
+
+<details>
+
+```python
+def motion_merge(feats_723):
+        # 30 * 3 + 30 * 6 + 30 * 3 = 360
+        # hands_motion = np.concatenate((data[:, 4+(body_joints - 1)*3:4+(joints - 1)*3], data[:, 4+(joints - 1)*3+(body_joints - 1)*6:4+(joints - 1)*9], data[:, 4 + (joints - 1) *9 + body_joints *3: 4 + (joints - 1) *9 + joints *3]), axis=1)
+        # 4 + 21 *3 + 21 * 6 + 22*3 + 4 =  263
+        # data_263 = np.concatenate((data[:, :4+(body_joints - 1)*3], data[:, 4+(joints - 1)*3:4+(joints - 1)*3+(body_joints - 1)*6], data[:, 4 + (joints - 1)*9: 4 + (joints - 1) *9 + body_joints *3], data[:, -4:]), axis=1)
+        
+        body = feats_723[..., :263]
+        hands = feats_723[..., 263:623]
+
+        # feats_623 = np.concatenate((body[:, :4+(22 - 1)*3], 
+        #                             hands[:, :30*3], 
+        #                             body[:, 4+(22 - 1)*3:4+(22 - 1)*3+(22 - 1)*6], 
+        #                             hands[:, 30*3:30*6],
+        #                             body[:, 4+(22 - 1)*9:4+(22 - 1)*9+22*3], 
+        #                             hands[:, 30*9:30*9+30*3], 
+        #                             body[:, -4:]), axis=1)
+
+        feats_623 = np.concatenate((body[..., :4+(22 - 1)*3], 
+                                hands[..., :30*3], 
+                                body[..., 4+(22 - 1)*3:4+(22 - 1)*3+(22 - 1)*6], 
+                                hands[..., 30*3:30*9],
+                                body[..., 4+(22 - 1)*9:4+(22 - 1)*9+22*3], 
+                                hands[..., 30*9:30*9+30*3], 
+                                body[..., -4:]), dim=-1)
+        return feats_623
+```
+</details>
 
 #### Music Feature Extraction
 

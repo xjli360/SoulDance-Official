@@ -25,26 +25,24 @@ import os
 from os.path import join as pjoin
 
 import torch
-from torch.utils.data import DataLoader
+import numpy as np
 
+from torch.utils.data import DataLoader
 from models.vq.model import RVQVAE,HRVQVAE
 from models.vq.vq_trainer import RVQTokenizerTrainer
 from options.vq_option import arg_parse
-from data.t2m_dataset import MotionDataset
-from utils import paramUtil
-import numpy as np
-
-from models.t2m_eval_wrapper import EvaluatorModelWrapper
+from data.m2m_dataset import MotionDataset
+from models.m2m_eval_wrapper import EvaluatorModelWrapper
 from utils.get_opt import get_opt
-from motion_loaders.dataset_motion_loader import get_dataset_motion_loader
-
+from data.dataset_motion_loader import get_music_motion_loader
 from utils.motion_process import recover_from_ric
 from utils.plot_script import plot_3d_motion
 from utils.fixseed import fixseed
+from utils import paramUtil
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-def plot_t2m(data, save_dir):
+def plot_m2m(data, save_dir):
     data = train_dataset.inv_transform(data)
     for i in range(len(data)):
         joint_data = data[i]
@@ -64,20 +62,29 @@ if __name__ == "__main__":
     opt.model_dir = pjoin(opt.save_root, 'model')
     opt.meta_dir = pjoin(opt.save_root, 'meta')
     opt.eval_dir = pjoin(opt.save_root, 'animation')
+
+    # SoulDance dataset parameters
+    opt.data_root = './data/souldance/'
     opt.log_dir = pjoin('./log/vq/', opt.dataset_name, opt.name)
-    dataset_opt_path = './checkpoints/souldance/opt.txt'
+    opt.motion_dir = pjoin(opt.data_root, 'motion')
+    opt.joints_num = 52
+    radius = 4
+    fps = 60
+    dim_pose = 723
+    opt.max_motion_length = 300
+    kinematic_chain = paramUtil.t2m_body_hand_kinematic_chain
+    dataset_opt_path = pjoin(opt.data_root, 'opt.txt')
 
     os.makedirs(opt.model_dir, exist_ok=True)
     os.makedirs(opt.meta_dir, exist_ok=True)
     os.makedirs(opt.eval_dir, exist_ok=True)
     os.makedirs(opt.log_dir, exist_ok=True)
 
-
     wrapper_opt = get_opt(dataset_opt_path, torch.device('cuda'))
     eval_wrapper = EvaluatorModelWrapper(wrapper_opt)
 
-    mean = np.load(pjoin(opt.data_root, 'Mean.npy'))
-    std = np.load(pjoin(opt.data_root, 'Std.npy'))
+    mean = np.load(pjoin(opt.data_root, 'mean.npy'))
+    std = np.load(pjoin(opt.data_root, 'std.npy'))
 
     train_split_file = pjoin(opt.data_root, 'train.txt')
     val_split_file = pjoin(opt.data_root, 'val.txt')
@@ -87,7 +94,6 @@ if __name__ == "__main__":
                     opt.dim_pose,
                     opt.nb_code,
                     opt.code_dim,
-                    opt.code_dim,
                     opt.down_t,
                     opt.stride_t,
                     opt.width,
@@ -95,7 +101,7 @@ if __name__ == "__main__":
                     opt.dilation_growth_rate,
                     opt.vq_act,
                     opt.vq_norm)
-    elif opt.vq_type == "rvq":
+    elif opt.vq_type == "hrvq":
         net = HRVQVAE(opt,
                      opt.dim_pose,
                      opt.nb_code,
@@ -121,5 +127,5 @@ if __name__ == "__main__":
                               shuffle=True, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=opt.batch_size, drop_last=True, num_workers=4,
                             shuffle=True, pin_memory=True)
-    eval_val_loader, _ = get_dataset_motion_loader(dataset_opt_path, 32, 'val', device=opt.device)
-    trainer.train(train_loader, val_loader, eval_val_loader, eval_wrapper, plot_t2m)
+    eval_val_loader, _ = get_music_motion_loader(dataset_opt_path, 32, 'val', device=opt.device)
+    trainer.train(train_loader, val_loader, eval_val_loader, eval_wrapper, plot_m2m)

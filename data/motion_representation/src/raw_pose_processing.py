@@ -79,7 +79,7 @@ def findAllFile(base):
 smplx_layer, smplx_model = get_smplx_layer(comp_device)
 
 # change your path here with Motion-X SMPLX format with 322 dims
-train_dataset = MotionDatasetV2(root_path='/workspace/SoulNet/dataset/souldance/motion_npy/', debug=False)
+train_dataset = MotionDatasetV2(root_path='./dataset/motion/', debug=False)
 train_loader = DataLoader(train_dataset, batch_size=8, drop_last=False,
                           num_workers=4, shuffle=False, collate_fn=mld_collate)
 
@@ -112,7 +112,7 @@ def amass_to_pose(src_motion, src_path, length):
     for i in range(joints.shape[0]):
         joint = joints[i][:int(length[i])].detach().cpu().numpy()
         # change the save folder
-        save_path = src_path[i].replace('/motion_npy/', '/joint/')
+        save_path = src_path[i].replace('/motion/', '/joint/')
         os.makedirs(os.path.split(save_path)[0], exist_ok=True)
         np.save(save_path, joint)
 
